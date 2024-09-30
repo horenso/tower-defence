@@ -1,7 +1,6 @@
 const std = @import("std");
 const math = std.math;
 const c = @import("./sdl.zig").SDL;
-const Map = @import("./map.zig").Map;
 
 pub const WINDOW_WIDTH = 1344;
 pub const WINDOW_HEIGHT = 704;
@@ -11,12 +10,11 @@ const GameInitError = error{
     SDLResourceLoadingFailed,
 };
 
-pub const Game = struct {
+pub const Engine = struct {
     window: *c.SDL_Window,
     renderer: *c.SDL_Renderer,
-    map: Map,
 
-    pub fn init() GameInitError!Game {
+    pub fn init() GameInitError!Engine {
         if (c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_TIMER) < 0) {
             c.SDL_Log("Unable to initialize SDL: %s", c.SDL_GetError());
             return GameInitError.SDLInitializationFailed;
@@ -58,18 +56,13 @@ pub const Game = struct {
         };
         errdefer c.SDL_DestroyRenderer(renderer);
 
-        const map = try Map.init(renderer);
-        errdefer map.deinit();
-
-        return Game{
+        return Engine{
             .window = window,
             .renderer = renderer,
-            .map = map,
         };
     }
 
-    pub fn deinit(self: *Game) void {
-        self.map.deinit();
+    pub fn deinit(self: *Engine) void {
         c.SDL_DestroyRenderer(self.renderer);
         c.SDL_DestroyWindow(self.window);
         c.TTF_Quit();

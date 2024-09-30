@@ -1,16 +1,27 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // const game_lib = b.addSharedLibrary(.{
-    //     .name = "game",
-    //     .root_source_file =
-    //     .target = b.host,
-    // });
+    const optimize = b.standardOptimizeOption(.{});
+
+    const game_lib = b.addSharedLibrary(.{
+        .name = "game",
+        .root_source_file = b.path("lib/game.zig"),
+        .target = b.host,
+        .optimize = optimize,
+    });
+
+    game_lib.linkSystemLibrary("SDL2");
+    game_lib.linkSystemLibrary("SDL2_image");
+    game_lib.linkSystemLibrary("SDL2_ttf");
+    game_lib.linkSystemLibrary("c");
+
+    b.installArtifact(game_lib);
 
     const exe = b.addExecutable(.{
-        .name = "tower-defence",
+        .name = "game",
         .root_source_file = b.path("src/main.zig"),
         .target = b.host,
+        .optimize = optimize,
     });
 
     exe.linkSystemLibrary("SDL2");

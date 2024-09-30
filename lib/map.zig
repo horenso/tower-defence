@@ -3,12 +3,10 @@ const log = @import("std").log;
 
 const sdl = @import("./sdl.zig").SDL;
 
-const game = @import("./game.zig");
-const Game = game.Game;
-const WINDOW_HEIGHT = game.WINDOW_HEIGHT;
-const WINDOW_WIDTH = game.WINDOW_WIDTH;
+pub const WINDOW_WIDTH = 1344;
+pub const WINDOW_HEIGHT = 704;
 
-const vec = @import("./vec.zig");
+const vec = @import("../vec.zig");
 const FVec = vec.FVec;
 const IVec = vec.IVec;
 
@@ -107,6 +105,7 @@ pub const Map = struct {
     bg_texture: *sdl.SDL_Texture,
 
     pub fn init(renderer: *sdl.SDL_Renderer) !Map {
+        std.log.info("Map init()", .{});
         var map_data: MapDataType = undefined;
 
         var it = std.mem.split(u8, MAP_FILE, "\n");
