@@ -1,9 +1,15 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    // const game_lib = b.addSharedLibrary(.{
+    //     .name = "game",
+    //     .root_source_file =
+    //     .target = b.host,
+    // });
+
     const exe = b.addExecutable(.{
         .name = "tower-defence",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = b.host,
     });
 
