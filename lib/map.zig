@@ -11,8 +11,8 @@ const FVec = vec.FVec;
 const IVec = vec.IVec;
 
 const TEXTURE_PATH = "./res/tiles.png";
-const TILE_HEIGHT = 32;
-const TILE_WIDTH = 32;
+const TILE_HEIGHT = 16;
+const TILE_WIDTH = 16;
 const MAP_FILE = @embedFile("./map.txt");
 const MAP_TILES_X = 42;
 const MAP_TILES_Y = 22;
@@ -128,8 +128,8 @@ pub const Map = struct {
 
     pub fn render(self: *Map, renderer: *sdl.SDL_Renderer) void {
         const source_rect = sdl.SDL_Rect{
-            .w = WINDOW_WIDTH,
-            .h = WINDOW_HEIGHT,
+            .w = WINDOW_WIDTH / 2,
+            .h = WINDOW_HEIGHT / 2,
             .x = 0,
             .y = 0,
         };

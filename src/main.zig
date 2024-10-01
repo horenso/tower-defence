@@ -12,14 +12,8 @@ const IDEAL_FRAME_TIME: f64 = 1000 / 60;
 const LIBRARY_PATH = "zig-out/lib/libgame.so";
 
 var game_dyn_lib: ?std.DynLib = null;
-var library_modified: i128 = 0;
 
-fn load_game_library() !bool {
-    const stat = try std.fs.cwd().statFile(LIBRARY_PATH);
-    if (library_modified == stat.mtime) {
-        return false;
-    }
-    library_modified = stat.mtime;
+fn load_game_library() !void {
     if (game_dyn_lib) |*dyn_lib| {
         dyn_lib.close();
         game_dyn_lib = null;
@@ -33,8 +27,7 @@ fn load_game_library() !bool {
     gameDeinit = dyn_lib.lookup(@TypeOf(gameDeinit), "gameDeinit") orelse return error.LookupFail;
     gameRender = dyn_lib.lookup(@TypeOf(gameRender), "gameRender") orelse return error.LookupFail;
 
-    std.log.info("Library reloeaded", .{});
-    return true;
+    std.log.info("Game refreshed", .{});
 }
 
 const Game = anyopaque;
@@ -44,11 +37,24 @@ var gameInit: *const fn (*sdl.SDL_Renderer) *Game = undefined;
 var gameDeinit: *const fn (*Game) void = undefined;
 var gameRender: *const fn (*Game, *sdl.SDL_Renderer) void = undefined;
 
+var reload_game = false;
+
+const signal = @cImport({
+    @cInclude("signal.h");
+});
+
+fn sigintHandler(_: c_int) callconv(.C) void {
+    std.log.info("Reloading...", .{});
+    reload_game = true;
+}
+
 pub fn main() !void {
     var engine = try Engine.init();
     defer engine.deinit();
 
-    _ = try load_game_library();
+    try load_game_library();
+
+    _ = signal.signal(signal.SIGUSR1, &sigintHandler);
 
     var game = gameInit(engine.renderer);
 
@@ -59,19 +65,17 @@ pub fn main() !void {
     var delta_time: f64 = 0;
     var fps: f64 = 0.0;
 
-    var ticks: u8 = 0;
-
     while (!quit) {
         now = sdl.SDL_GetPerformanceCounter();
         delta_time = @as(f64, @floatFromInt(now - last)) / @as(f64, @floatFromInt(sdl.SDL_GetPerformanceFrequency()));
         fps = 1.0 / delta_time;
         last = now;
 
-        if (ticks % 60 == 0) {
-            if (try load_game_library()) {
-                gameDeinit(game);
-                game = gameInit(engine.renderer);
-            }
+        if (reload_game) {
+            try load_game_library();
+            gameDeinit(game);
+            game = gameInit(engine.renderer);
+            reload_game = false;
         }
 
         var event: sdl.SDL_Event = undefined;
@@ -96,7 +100,5 @@ pub fn main() !void {
 
         const delay: f64 = @min(0, std.math.round(IDEAL_FRAME_TIME - delta_time));
         sdl.SDL_Delay(@intFromFloat(delay));
-
-        ticks +%= 1;
     }
 }
